@@ -1,0 +1,112 @@
+# Source configuration for the TechRadar ingestion pipeline.
+#
+# Every source is independently configurable and triggerable:
+#   python -m techradar.cli ingest --source arxiv
+#   python -m techradar.cli ingest --source federal_register --from 2024-01-01 --to 2024-06-30
+# No application code needs to change to adjust cadence, scope, or caps.
+
+defaults:
+  request_timeout: 30
+  user_agent: "TechRadarAgent/0.1 (open research corpus builder)"
+  retry_max: 4
+  retry_backoff_seconds: 5
+
+sources:
+  arxiv:
+    enabled: true
+    connector: arxiv
+    bucket: research
+    doc_type: paper
+    cadence: daily            # declared update cadence
+    fetch_strategy: "OAI-PMH incremental harvest by datestamp; date-bounded backfill via from/until"
+    storage_mode: abstract_only   # policy: title+abstract stored, full text by hyperlink (PDF URL)
+    params:
+      # OAI-PMH sets to harvest; records are filtered client-side to target_categories.
+      oai_sets: [eess, cs, stat, physics:physics, physics:cond-mat]
+      target_categories:
+        [eess.SY, eess.SP, cs.AI, cs.LG, stat.ML, cs.DC, cs.AR, cs.NI,
+         physics.app-ph, cond-mat.mtrl-sci]
+      # default backfill window start when no cursor exists (per set, overridable via CLI)
+      default_from:
+        eess: "2020-01-01"
+        cs: "2025-04-01"
+        stat: "2024-01-01"
+        "physics:physics": "2020-01-01"
+        "physics:cond-mat": "2024-06-01"
+      # per-set caps prevent one large set from starving the others
+      max_docs_per_set:
+        eess: 18000
+        cs: 16000
+        stat: 3000
+        "physics:physics": 5000
+        "physics:cond-mat": 4000
+      max_docs_per_run: 60000
+      min_seconds_between_requests: 3.1
+
+  osti:
+    enabled: true
+    connector: osti
+    bucket: research
+    doc_type: report
+    cadence: weekly
+    fetch_strategy: "OSTI E-Link v2 API, paged, filtered by research subject queries; date-bounded via publication date"
+    storage_mode: abstract_only
+    params:
+      queries:
+        - "grid energy storage"
+        - "power grid control"
+        - "data center energy efficiency"
+        - "renewable integration transmission"
+        - "grid reliability inverter"
+      rows_per_page: 100
+      max_docs_per_run: 8000
+
+  federal_register:
+    enabled: true
+    connector: federal_register
+    bucket: regulatory
+    doc_type: order
+    cadence: daily
+    fetch_strategy: "Federal Register API (documents.json), agency-filtered, date-bounded; effective/comment dates drive staleness"
+    storage_mode: abstract_only
+    params:
+      agencies: [federal-energy-regulatory-commission, energy-department]
+      per_page: 100
+      default_from: "2015-01-01"
+      max_docs_per_run: 15000
+
+  nerc:
+    enabled: true
+    connector: nerc
+    bucket: regulatory
+    doc_type: standard
+    cadence: monthly
+    fetch_strategy: "One-shot scrape of the NERC Reliability Standards index; version lifecycle drives supersession"
+    storage_mode: full_text
+    params: {}
+
+  github_releases:
+    enabled: true
+    connector: github_releases
+    bucket: practitioner
+    doc_type: release
+    cadence: weekly
+    fetch_strategy: "GitHub REST API releases per curated repo list; repo README ingested as whitepaper-style doc"
+    storage_mode: full_text
+    params:
+      repos:
+        - PyPSA/PyPSA
+        - e2nIEE/pandapower
+        - powsybl/pypowsybl
+        - gridstatus/gridstatus
+        - NREL/reV
+        - NREL/PySAM
+        - GridMod/GridPACK
+        - com-pas/compas-sct
+        - vllm-project/vllm
+        - NVIDIA/TensorRT-LLM
+        - ray-project/ray
+        - kubernetes-sigs/kueue
+        - triton-inference-server/server
+        - microsoft/DeepSpeed
+      max_releases_per_repo: 40
