@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "techradar-kb": {
+      "command": ".venv/bin/python",
+      "args": ["-m", "techradar.mcp_server.server"],
+      "env": {}
+    }
+  }
+}

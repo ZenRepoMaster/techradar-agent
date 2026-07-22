@@ -127,7 +127,7 @@ CREATE INDEX IF NOT EXISTS idx_chunks_embedded ON chunks(embedded_at);
 
 -- keyword leg of hybrid retrieval
 CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
-    text, chunk_id UNINDEXED, bucket UNINDEXED, content=''
+    text, chunk_id UNINDEXED, bucket UNINDEXED
 );
 
 CREATE TABLE IF NOT EXISTS fetch_runs (
