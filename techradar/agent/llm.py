@@ -61,18 +61,25 @@ class LLMClient:
         return fn(system, prompt, max_tokens)
 
     def complete_json(self, system: str, prompt: str, max_tokens: int = 2048) -> dict | list:
-        """Complete and parse a JSON object/array, tolerating code fences."""
-        raw = self.complete(system + "\nRespond with valid JSON only.", prompt, max_tokens)
-        text = raw.strip()
-        if text.startswith("```"):
-            text = text.split("```")[1]
-            text = text.removeprefix("json").strip()
-        start = min((i for i in (text.find("{"), text.find("[")) if i != -1), default=0)
-        end = max(text.rfind("}"), text.rfind("]")) + 1
-        try:
-            return json.loads(text[start:end])
-        except json.JSONDecodeError as exc:
-            raise LLMError(f"model returned unparseable JSON: {exc}: {raw[:200]}") from exc
+        """Complete and parse a JSON object/array, tolerating code fences.
+
+        A JSON parse failure is most often output truncation at max_tokens, so
+        one retry with a doubled budget is attempted before giving up.
+        """
+        last_exc: Exception | None = None
+        for budget in (max_tokens, max_tokens * 2):
+            raw = self.complete(system + "\nRespond with valid JSON only.", prompt, budget)
+            text = raw.strip()
+            if text.startswith("```"):
+                text = text.split("```")[1]
+                text = text.removeprefix("json").strip()
+            start = min((i for i in (text.find("{"), text.find("[")) if i != -1), default=0)
+            end = max(text.rfind("}"), text.rfind("]")) + 1
+            try:
+                return json.loads(text[start:end])
+            except json.JSONDecodeError as exc:
+                last_exc = exc
+        raise LLMError(f"model returned unparseable JSON after retry: {last_exc}") from last_exc
 
     # -- providers ---------------------------------------------------------
 

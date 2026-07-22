@@ -183,7 +183,7 @@ class ResearchAgent:
         context = "\n\n---\n\n".join(blocks[:60])
         out = self.llm.complete_json(
             _SYNTH_SYSTEM,
-            f"Topic: {topic}\n\nEvidence:\n\n{context}", max_tokens=4096)
+            f"Topic: {topic}\n\nEvidence:\n\n{context}", max_tokens=8192)
 
         findings = out.get("key_findings", []) if isinstance(out, dict) else []
         # mechanical citation verification: LLM says [id]; database decides truth
