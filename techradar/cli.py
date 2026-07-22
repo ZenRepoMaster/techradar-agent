@@ -76,7 +76,8 @@ def cmd_staleness(args: argparse.Namespace) -> int:
 def cmd_index(args: argparse.Namespace) -> int:
     from .rag.index import build_index
 
-    stats = build_index(batch_size=args.batch, limit=args.limit)
+    stats = build_index(batch_size=args.batch, limit=args.limit,
+                        only_bucket=args.bucket)
     print(json.dumps(stats, indent=2))
     return 0
 
@@ -143,6 +144,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("index", help="chunk + embed + index new documents")
     p.add_argument("--batch", type=int, default=256)
     p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--bucket", choices=["research", "regulatory", "practitioner"],
+                   help="restrict this run to one bucket (parallel embedding)")
     p.set_defaults(fn=cmd_index)
 
     p = sub.add_parser("search", help="hybrid KB search")

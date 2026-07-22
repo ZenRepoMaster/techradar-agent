@@ -46,7 +46,8 @@ def _published_ts(published_at: str | None) -> int:
         return 0
 
 
-def build_index(batch_size: int = 256, limit: int | None = None) -> dict[str, Any]:
+def build_index(batch_size: int = 256, limit: int | None = None,
+                only_bucket: str | None = None) -> dict[str, Any]:
     """Chunk any un-chunked documents, then embed + index any un-embedded chunks.
 
     Incremental and resumable: progress is tracked in SQLite (``chunks`` rows,
@@ -62,6 +63,8 @@ def build_index(batch_size: int = 256, limit: int | None = None) -> dict[str, An
         "SELECT d.* FROM documents d LEFT JOIN chunks c ON c.doc_id = d.doc_id "
         "WHERE c.doc_id IS NULL AND d.duplicate_of IS NULL AND d.storage_mode != 'link_only'"
     )
+    if only_bucket:
+        q += f" AND d.bucket = '{only_bucket}'" if only_bucket in BUCKETS else ""
     if limit:
         q += f" LIMIT {int(limit)}"
     rows = [dict(r) for r in conn.execute(q)]
@@ -84,7 +87,7 @@ def build_index(batch_size: int = 256, limit: int | None = None) -> dict[str, An
 
     # 2. embed + index pending chunks, bucket by bucket
     client = _client()
-    for bucket in BUCKETS:
+    for bucket in ([only_bucket] if only_bucket else BUCKETS):
         col = collection(bucket, client)
         while True:
             pending = conn.execute(
