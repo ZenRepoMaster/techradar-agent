@@ -30,9 +30,10 @@ def connect(path: Path | None = None, read_only: bool = False) -> sqlite3.Connec
     if read_only:
         conn = sqlite3.connect(f"file:{target}?mode=ro", uri=True)
     else:
-        conn = sqlite3.connect(target)
+        conn = sqlite3.connect(target, timeout=60.0)
         conn.executescript(DDL)
         conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=60000")  # concurrent source runs interleave writes
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON")
     return conn

@@ -44,7 +44,10 @@ sources:
       min_seconds_between_requests: 3.1
 
   osti:
-    enabled: true
+    # osti.gov is TCP-unreachable from the development network; connector is
+    # implemented and tested against the documented API shape — flip to true
+    # and backfill from a network that can reach it. See docs/DESIGN.md.
+    enabled: false
     connector: osti
     bucket: research
     doc_type: report
