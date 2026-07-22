@@ -22,6 +22,7 @@ DEFAULT_MODELS = {
     "anthropic": "claude-opus-4-8",
     "groq": "llama-3.3-70b-versatile",
     "gemini": "gemini-2.0-flash",
+    "xai": "grok-3-mini",
     "ollama": "llama3.1",
 }
 
@@ -45,6 +46,8 @@ class LLMClient:
                 provider = "groq"
             elif os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"):
                 provider = "gemini"
+            elif os.environ.get("XAI_API_KEY"):
+                provider = "xai"
             else:
                 provider = "ollama"  # local fallback, no key needed
         if provider not in DEFAULT_MODELS:
@@ -92,6 +95,21 @@ class LLMClient:
             raise LLMError("GROQ_API_KEY is not set")
         resp = httpx.post(
             "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {key}"},
+            json={"model": self.model, "max_tokens": max_tokens,
+                  "messages": [{"role": "system", "content": system},
+                               {"role": "user", "content": prompt}]},
+            timeout=120,
+        )
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"]
+
+    def _xai(self, system: str, prompt: str, max_tokens: int) -> str:
+        key = os.environ.get("XAI_API_KEY")
+        if not key:
+            raise LLMError("XAI_API_KEY is not set")
+        resp = httpx.post(
+            "https://api.x.ai/v1/chat/completions",
             headers={"Authorization": f"Bearer {key}"},
             json={"model": self.model, "max_tokens": max_tokens,
                   "messages": [{"role": "system", "content": system},
