@@ -44,6 +44,29 @@ Everything runs locally: SQLite (metadata + FTS5 keyword index), ChromaDB
 (per-bucket vector indexes), fastembed/bge-small-en-v1.5 (ONNX embeddings).
 No cloud services required for ingestion, indexing, retrieval, or the MCP tool.
 
+### Getting a runnable corpus
+
+`data/` is gitignored (the built corpus is ~430 MB). Three ways to get one:
+
+| Option | Command | Time | Scale |
+|---|---|---|---|
+| **Prebuilt (recommended)** | download + extract the release artifact (below) | ~1 min | full 61k |
+| **Seed a small demo** | `./scripts/seed_demo.sh` | a few min | ~1-2k, all 3 buckets |
+| **Full reproduction** | `python -m techradar.cli ingest --all && python -m techradar.cli index` | hours | full 61k |
+
+**Prebuilt corpus** — the submitted SQLite DB + Chroma index are attached to the
+[latest GitHub Release](../../releases/latest) as `techradar-corpus.tar.gz`:
+
+```bash
+curl -L -o corpus.tar.gz <release-asset-url>   # ~200 MB compressed
+tar xzf corpus.tar.gz                            # extracts to ./data
+python -m techradar.cli status                   # verify: 61,201 docs
+```
+
+The seed script and full reproduction need one LLM credential only for the
+research agent (`brief`); ingestion, indexing, search, and the MCP tool need
+no key.
+
 The research agent needs one LLM credential (any of):
 
 ```bash
