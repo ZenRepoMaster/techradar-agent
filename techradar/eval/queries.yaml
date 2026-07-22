@@ -1,0 +1,93 @@
+# Curated evaluation query set.
+#
+# Each query carries an expectation predicate: a hit is a top-k result whose
+# source/bucket matches and whose title contains any of the given phrases.
+# Predicates were chosen against known corpus contents (specific NERC standard
+# numbers, FERC dockets, repos) so a hit is a real relevance judgment, not a
+# similarity tautology.
+
+k: 8
+
+queries:
+  # -- regulatory ---------------------------------------------------------
+  - id: reg-bal-frequency
+    query: "real power balancing control performance requirements for balancing authorities"
+    scope: [regulatory]
+    expect_bucket: regulatory
+    expect: {source: nerc, title_contains_any: ["BAL-001", "BAL-002", "BAL-003"]}
+  - id: reg-cip-cyber
+    query: "cyber security requirements protecting critical assets of the bulk electric system"
+    scope: [regulatory]
+    expect_bucket: regulatory
+    expect: {source: nerc, title_contains_any: ["CIP-"]}
+  - id: reg-storage-markets
+    query: "electric storage resource participation in wholesale electricity markets"
+    scope: [regulatory]
+    expect_bucket: regulatory
+    expect: {source: federal_register, title_contains_any: ["Electric Storage", "storage"]}
+  - id: reg-interconnection
+    query: "generator interconnection queue reform procedures"
+    scope: [regulatory]
+    expect_bucket: regulatory
+    expect: {source: federal_register, title_contains_any: ["Interconnection"]}
+  - id: reg-transmission-planning
+    query: "regional transmission planning and cost allocation reform"
+    scope: [regulatory]
+    expect_bucket: regulatory
+    expect: {source: federal_register, title_contains_any: ["Transmission"]}
+
+  # -- research -----------------------------------------------------------
+  - id: res-grid-forming
+    query: "grid-forming inverter control strategies for stability in low-inertia power systems"
+    scope: [research]
+    expect_bucket: research
+    expect: {source: arxiv, title_contains_any: ["grid-forming", "inverter", "inertia"]}
+  - id: res-rl-power
+    query: "reinforcement learning for power grid operation and control"
+    scope: [research]
+    expect_bucket: research
+    expect: {source: arxiv, title_contains_any: ["reinforcement learning", "deep reinforcement"]}
+  - id: res-datacenter-energy
+    query: "energy efficiency optimization for data center cooling"
+    scope: [research]
+    expect_bucket: research
+    expect: {source: arxiv, title_contains_any: ["data center", "datacenter", "cooling"]}
+  - id: res-llm-serving
+    query: "efficient scheduling of large language model inference on GPU clusters"
+    scope: [research]
+    expect_bucket: research
+    expect: {source: arxiv, title_contains_any: ["LLM", "inference", "serving", "language model"]}
+  - id: res-load-forecast
+    query: "probabilistic electric load forecasting with neural networks"
+    scope: [research]
+    expect_bucket: research
+    expect: {source: arxiv, title_contains_any: ["forecast", "load"]}
+
+  # -- practitioner -------------------------------------------------------
+  - id: prac-vllm
+    query: "vLLM release improvements to attention and inference throughput"
+    scope: [practitioner]
+    expect_bucket: practitioner
+    expect: {source: github_releases, title_contains_any: ["vllm"]}
+  - id: prac-powerflow
+    query: "open source python library for power flow network simulation"
+    scope: [practitioner]
+    expect_bucket: practitioner
+    expect: {source: github_releases, title_contains_any: ["pandapower", "PyPSA", "pypowsybl"]}
+  - id: prac-ray
+    query: "ray distributed computing release notes autoscaler changes"
+    scope: [practitioner]
+    expect_bucket: practitioner
+    expect: {source: github_releases, title_contains_any: ["ray"]}
+
+  # -- cross-bucket (unscoped routing checks) -----------------------------
+  - id: x-dc-load-growth
+    query: "grid reliability impacts of rapidly growing AI data center electricity demand"
+    scope: null            # unscoped on purpose: measures cross-bucket ranking
+    expect_bucket: null
+    expect: {title_contains_any: ["data center", "datacenter", "load", "demand"]}
+  - id: x-storage
+    query: "battery energy storage systems: market rules and control algorithms"
+    scope: null
+    expect_bucket: null
+    expect: {title_contains_any: ["storage", "battery"]}
