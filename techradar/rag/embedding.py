@@ -24,8 +24,13 @@ _QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
 @lru_cache(maxsize=1)
 def _model():
+    import os
     from fastembed import TextEmbedding
-    return TextEmbedding(model_name=MODEL_NAME)
+    # Thread cap: sustained all-core AVX load thermally throttles laptop CPUs
+    # into a slower steady state than a moderate thread count; 8-thread onnx
+    # held ~2x the long-run throughput of 16-thread on the dev machine.
+    threads = int(os.environ.get("TECHRADAR_EMBED_THREADS", "8"))
+    return TextEmbedding(model_name=MODEL_NAME, threads=threads)
 
 
 def embed_passages(texts: list[str], batch_size: int = 256) -> Iterable[list[float]]:

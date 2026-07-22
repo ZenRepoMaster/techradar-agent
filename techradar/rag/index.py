@@ -90,7 +90,7 @@ def build_index(batch_size: int = 256, limit: int | None = None) -> dict[str, An
             pending = conn.execute(
                 "SELECT chunk_id, doc_id, text, sub_bucket, source, published_at "
                 "FROM chunks WHERE embedded_at IS NULL AND bucket = ? LIMIT ?",
-                (bucket, batch_size * 4),
+                (bucket, batch_size * 2),  # small loop => frequent commits, resumable
             ).fetchall()
             if not pending:
                 break
