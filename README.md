@@ -106,9 +106,10 @@ auto-discovers the `techradar-kb` tools: `kb_search`, `kb_get_document`,
 
 Bucket scoping is a **pre-filter at the index level**: each bucket is its own
 vector collection, so a regulatory query never scans the 45k-document ArXiv
-index. Startup note: server code defers all heavy imports; measured cold start
-is dominated by the `mcp` SDK's own import (~2.6 s on the 2019 Intel-Mac dev
-machine, well under 2 s on current hardware — see docs/DESIGN.md).
+index. Startup: the server uses the low-level MCP `Server` API (cheaper import
+than `FastMCP`) and defers the embedding model / vector client to the first
+`kb_search`; measured cold start (spawn → import → MCP initialize) is ~1.8 s on
+the 2019 Intel-Mac dev machine, under the 2 s requirement — see docs/DESIGN.md.
 
 ## Layout
 

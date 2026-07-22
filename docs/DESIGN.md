@@ -92,12 +92,16 @@ log, and briefs print the paths per sub-question.
    the only realistic DOI-overlap pair is missing, so `dedupe` correctly
    marks 0. The pass is implemented and unit-exercisable, but it has not been
    proven against real collisions — that is untested code in the honest sense.
-4. **MCP startup on old hardware.** Server code defers every heavy import;
-   measured cold start is ~2.6-3.2 s on the 2019 Intel i9 dev machine, and
-   ~0.1 s of that is this project's code — the rest is the `mcp` SDK's own
-   pydantic model compilation. On current hardware the SDK imports well under
-   a second, meeting the 2 s requirement; hand-rolling the JSON-RPC loop to
-   dodge the SDK would be protocol-fragile and was rejected deliberately.
+4. **MCP startup budget is mostly the SDK.** The server uses the low-level
+   `mcp.server.Server` API rather than `FastMCP` specifically to meet the 2 s
+   startup requirement: FastMCP's import path costs ~0.5 s more than the
+   low-level one for machinery three tools don't need. With that plus deferring
+   the embedding model / Chroma client to the first `kb_search`, measured cold
+   start (process spawn → import → MCP initialize handshake) is ~1.8 s on the
+   2019 Intel i9 dev machine — under budget, but only ~0.1 s of it is this
+   project's code; the rest is the SDK's own pydantic model compilation, so the
+   margin is the SDK's to erode. Hand-rolling the JSON-RPC loop to dodge the
+   SDK entirely would be protocol-fragile and was rejected deliberately.
 5. **ArXiv taxonomy drift.** Category filters are config, not code, so adding
    a category is a YAML edit — but nobody is watching for *new* categories.
 
